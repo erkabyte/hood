@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>A-Frame using a Camera with Orbit Controls</title>
+        <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+        <script src="aframe-orbit-controls-component.js"></script>
+
+        <script src="./three.min.js"></script>
+        <script src="./panolens.js"></script>
+    <script type="text/javascript">
+        var countFrame = 155;
+        var degreeVar = 360/countFrame;
+        var degreeCounter = 0;
+        var userDegreeCounter = 0;
+        var camDistance = 50;
+        function radians_to_degrees(radians)
+        {
+          var pi = Math.PI;
+          return radians * (180/pi);
+        }
+            
+        
+        AFRAME.registerComponent('rotation-reader', {
+            init: function(){
+  
+            },
+            tick: function () {
+              // `this.el` is the element.
+              // `object3D` is the three.js object.
+  
+              // `rotation` is a three.js Euler using radians. `quaternion` also available.
+              //  console.log(this.el.object3D.rotation);
+               testTemp = this.el.object3D.rotation;
+               //console.log(radians_to_degrees(testTemp._y));
+               degreeCounter = 180 -radians_to_degrees(testTemp._y);
+              //  if(degreeCounter < 0) {
+              //   // degreeCounter*=-1;
+              //   degreeCounter = 180 - degreeCounter;
+              //  }
+  
+              userDegreeCounter = Math.floor( degreeCounter / degreeVar);
+  
+              //  console.log(degreeCounter);
+               //console.log(radians_to_degrees(0.7853981633974483));
+              // `position` is a three.js Vector3.
+              //console.log(this.el.object3D.position);
+            }
+          });
+  
+          AFRAME.registerComponent('look-at-y', {
+            schema: {
+              target: {type: 'string', default: 'camera'}
+            },
+            init: function () { },
+            update: function () { },
+            tick: function () {
+              const targetEl = document.getElementById(this.data.target).object3D;
+              const el = this.el.object3D;
+              const vec = new THREE.Vector3();
+              targetEl.getWorldDirection(vec);
+              vec.y = 0;
+              vec.add(el.position)
+              //el.lookAt(vec);
+            }
+          });
+  
+          AFRAME.registerComponent("foo", {
+            init: function() {
+            var cursor = document.querySelector("a-cursor")
+            if (AFRAME.utils.device.isMobile() ) {
+                //cursor.setAttribute("visible", false);
+                //or just cursor.parentNode.removeChild(cursor)
+                // this.el.sceneEl.setAttribute("cursor","rayOrigin","mouse")
+                // console.log("It is mobile!");
+              }
+            },
+            update: function () { 
+            if (AFRAME.utils.device.isMobile() ) {
+                //cursor.setAttribute("visible", false);
+                //or just cursor.parentNode.removeChild(cursor)
+                // this.el.sceneEl.setAttribute("cursor","rayOrigin","mouse")
+                // console.log("It is mobile!");
+              console.log("It is mobile!");
+              }
+            }
+          })
+          
+        AFRAME.registerComponent("animate-png", {
+          init: function() {
+            // load the .pngs
+            let loader = new THREE.TextureLoader()
+            this.pngArray = []
+            // this.pngArray.push(loader.load('https://i.imgur.com/wjobVTN.jpg'))
+            // this.pngArray.push(loader.load('https://i.imgur.com/I7PAB.jpg'))
+            // this.pngArray.push(loader.load('https://i.imgur.com/HNluPrg.jpg'))
+            // this.pngArray.push(loader.load('set-3_interpolated/Set-3_ (1).png'))
+  
+            for(j=1;j<=countFrame;j++){
+              this.pngArray.push(loader.load('set-3_interpolated/Set-3_-('+j+').png'))
+            }
+  
+            this.el.addEventListener('loaded', e => {
+              let mesh = this.el.getObject3D("mesh")
+              this.material = mesh.material
+  
+              var i = 0
+              console.log("testing..");
+              // this.id = setInterval(e => {
+              //   if (i >= this.pngArray.length) i = 0;
+              //   this.material.map = this.pngArray[i++]
+              //   this.material.needsUpdate = true
+              // }, 500)
+            })
+          },
+          tick: function () {
+            // console.log(degreeCounter);
+                this.material.map = this.pngArray[countFrame - userDegreeCounter]
+                this.material.needsUpdate = true
+                this.el.setAttribute('rotation', {x: 0, y: 360-degreeCounter, z: 0});
+                var t1 = this.el.sceneEl.camera.el.getAttribute('position');
+                var t2 = this.el.getAttribute('position');
+                var p1 = document.querySelector('#pointer');
+
+                var nn = {}
+                var inverter = -1;
+                this.el.setAttribute('position', {x: (t1.x>=0?t1.x-camDistance:t1.x+camDistance), y: 60, z: (t1.z>=0?t1.z-camDistance:t1.z+camDistance)});
+                // this.el.setAttribute('position', {x: 120, y: 360, z: 120});
+                //console.log(degreeCounter)
+          },
+          remove: function() {
+            clearInterval(this.id);
+            // free the memory
+            for (let i = 1; i <= this.pngArray.length; i++) {
+              this.pngArray[i].dispose();
+            }
+          }
+        });
+        AFRAME.registerComponent("animate-cam", {
+          init: function() {
+            this.el.addEventListener('loaded', e => {
+              let mesh = this.el.getObject3D("mesh")
+              this.material = mesh.material
+              var i = 0
+              console.log("testing..");
+              var cameraEl = this.el.sceneEl.camera.el;
+              console.log(cameraEl.getAttribute('rotation'));
+            })
+          },
+          tick: function () {
+            var t1 = this.el.sceneEl.camera.el.getAttribute('position');
+            var t2 = this.el.sceneEl.camera.el.getAttribute('position');
+            var p1 = document.querySelector('#pointer').getAttribute('position');
+
+            // this.el.el.setAttribute('position');
+                 console.log("camera :  "+JSON.stringify(t1));
+                 console.log("people :  "+JSON.stringify(t2));
+          },
+          remove: function() {
+            clearInterval(this.id);
+            // free the memory
+            for (let i = 1; i <= this.pngArray.length; i++) {
+              this.pngArray[i].dispose();
+            }
+          }
+        });
+  
+        AFRAME.registerComponent("animate-bg", {
+          init: function() {
+            // load the .pngs
+            let loader = new THREE.TextureLoader()
+            this.pngArray = []
+            // this.pngArray.push(loader.load('https://i.imgur.com/wjobVTN.jpg'))
+            // this.pngArray.push(loader.load('https://i.imgur.com/I7PAB.jpg'))
+            // this.pngArray.push(loader.load('https://i.imgur.com/HNluPrg.jpg'))
+            // this.pngArray.push(loader.load('set-3_interpolated/Set-3_ (1).png'))
+  
+            
+  
+            this.el.addEventListener('loaded', e => {
+              let mesh = this.el.getObject3D("mesh")
+              this.material = mesh.material
+  
+              var i = 0
+              console.log("testing..");
+              // this.id = setInterval(e => {
+              //   if (i >= this.pngArray.length) i = 0;
+              //   this.material.map = this.pngArray[i++]
+              //   this.material.needsUpdate = true
+              // }, 500)
+            })
+          },
+          tick: function () {
+            // console.log(degreeCounter);
+                // this.material.map = this.pngArray[countFrame - userDegreeCounter]
+                // this.material.needsUpdate = true
+                this.el.setAttribute('rotation', {x: 0, y: 360-degreeCounter, z: 0});
+                //console.log(degreeCounter)
+          },
+          remove: function() {
+            clearInterval(this.id);
+            // free the memory
+            
+          }
+        });
+  
+      </script>
+      </head>
+      
+      <body>
+          <a-scene >
+      
+    <a-sky id="mId" src="city_warped.png" rotation="0 -130 0"></a-sky>
+    <!-- <a-plane id="mId" src="city_warped.png" rotation="0 -130 0" scale= "1000 1000 1000" position="-5 -120 -5" side="double" animate-bg></a-plane> -->
+              <a-entity
+                  id="camera"
+                  camera="fov:120;
+                          zoom:0.2
+                  "
+                  position="240 240 240"
+                  rotation= "0 -90 0"
+                  look-controls="enabled:false;"
+                  orbit-controls="
+                      autoRotate: false;
+                      target: #pointer;
+                      enableDamping: true;
+                      dampingFactor: 0.25;
+                      rotateSpeed:0.14;
+                      minDistance:120;
+                      maxDistance:240;
+                      enablePan:false;
+                      autoRotateSpeed:0.3;
+                      fov:240
+                      "
+                      look-at-y
+                      rotation-reader
+                  mouse-cursor=""
+                  >
+              </a-entity>
+              <a-link position="0 0 0" id="pointer" href="index.html" title="My Homepage" image="#homeThumbnail"></a-link>
+    <a-plane animate-cam  id="target"
+    scale= "100 100 100" position="240 -120 0" side="double" transparent="true" color="#CCC" height="2" width="2" animate-png></a-plane>
+      
+              <!-- <a-entity id="target" geometry="primitive: box" scale="1 1 1" position="0 0 0" material="color: #cc0000"></a-entity>
+              <a-entity geometry="primitive: box" scale="1 1 1" position="8 0 0" material="color: #ffffff"></a-entity>
+              <a-entity geometry="primitive: box" scale="1 1 1" position="-8 0 0" material="color: #ffffff"></a-entity>
+              <a-entity geometry="primitive: box" scale="1 1 1" position="16 0 0" material="color: #ffffff"></a-entity>
+              <a-entity geometry="primitive: box" scale="1 1 1" position="-16 0 0" material="color: #ffffff"></a-entity>
+      
+              <a-sky color="#000000"></a-sky> -->
+      
+
+                
+
+
+
+          </a-scene>
+      </body>
+</html>
